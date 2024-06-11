@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
@@ -16,8 +15,8 @@ import org.springframework.context.annotation.Configuration;
 import it.ipzs.fedauthority.oidclib.schemas.OIDCProfile;
 
 @Configuration
-@ConfigurationProperties(prefix = "oidc")
-public class OidcConfig extends BaseConfig {
+@ConfigurationProperties(prefix = "fed-config")
+public class FedConfig extends BaseConfig {
 
 	private String defaultTrustAnchor;
 	private List<String> trustAnchors = new ArrayList<>();
@@ -83,9 +82,6 @@ public class OidcConfig extends BaseConfig {
 
 		json.put("defaultTrustAnchor", defaultTrustAnchor);
 		json.put("trustAnchors", trustAnchors);
-		json.put("relyingParty", relyingParty.toJSON());
-		json.put("spidProviders", new JSONArray(spidProviders));
-		json.put("cieProviders", new JSONArray(cieProviders));
 		json.put("hosts", hosts.toJSON());
 
 		return json;
@@ -131,6 +127,10 @@ public class OidcConfig extends BaseConfig {
 			return relyingParty;
 		}
 
+		public String getFederationEntity() {
+			return federationEntity;
+		}
+
 		public void setTrustAnchor(String trustAnchor) {
 			this.trustAnchor = trustAnchor;
 		}
@@ -143,16 +143,22 @@ public class OidcConfig extends BaseConfig {
 			this.relyingParty = relyingParty;
 		}
 
+		public void setFederationEntity(String federationEntity) {
+			this.federationEntity = federationEntity;
+		}
+
 		public JSONObject toJSON() {
 			return new JSONObject()
 					.put("trust-anchor", trustAnchor)
 					.put("cie-provider", cieProvider)
+					.put("federation-entity", federationEntity)
 					.put("relying-party", relyingParty);
 		}
 
 		private String trustAnchor = "127.0.0.1";
 		private String cieProvider = "127.0.0.1";
 		private String relyingParty = "127.0.0.1";
+		private String federationEntity = "127.0.0.1";
 
 	}
 
@@ -275,14 +281,6 @@ public class OidcConfig extends BaseConfig {
 			return json;
 		}
 
-		public String getEncrJwkFilePath() {
-			return encrJwkFilePath;
-		}
-
-		public void setEncrJwkFilePath(String encrJwkFilePath) {
-			this.encrJwkFilePath = encrJwkFilePath;
-		}
-
 		private String applicationName;
 		private String applicationType;
 		private Set<String> contacts = new HashSet<>();
@@ -292,7 +290,6 @@ public class OidcConfig extends BaseConfig {
 		private Set<String> requestUris = new HashSet<>();
 		private String jwkFilePath;
 		private String trustMarksFilePath;
-		private String encrJwkFilePath;
 
 	}
 
@@ -305,7 +302,6 @@ public class OidcConfig extends BaseConfig {
 		private String credentialEndpoint;
 		private Set<String> dpopSigningAlgValuesSupported = new HashSet<>();
 		private String jwkFilePath;
-		private String mdocJwkFilePath;
 		private String encrJwkFilePath;
 		private String sub;
 		private List<String> trustChain = new ArrayList<>();
@@ -374,14 +370,6 @@ public class OidcConfig extends BaseConfig {
 			this.jwkFilePath = jwkFilePath;
 		}
 
-		public String getMdocJwkFilePath() {
-			return mdocJwkFilePath;
-		}
-
-		public void setMdocJwkFilePath(String mdocJwkFilePath) {
-			this.mdocJwkFilePath = mdocJwkFilePath;
-		}
-
 		public String getEncrJwkFilePath() {
 			return encrJwkFilePath;
 		}
@@ -413,6 +401,11 @@ public class OidcConfig extends BaseConfig {
 		private String policyUri;
 		private String tosUri;
 		private String logoUri;
+		private String federation_fetch_endpoint;
+		private String federation_resolve_endpoint;
+		private String federation_trust_mark_status_endpoint;
+		private String federation_list_endpoint;
+		private String federation_historical_jwks_endpoint;
 		public String getHomepageUri() {
 			return homepageUri;
 		}
@@ -442,6 +435,45 @@ public class OidcConfig extends BaseConfig {
 		}
 		public void setLogoUri(String logoUri) {
 			this.logoUri = logoUri;
+		}
+		public String getFederation_fetch_endpoint() {
+			return federation_fetch_endpoint;
+		}
+
+		public void setFederation_fetch_endpoint(String federation_fetch_endpoint) {
+			this.federation_fetch_endpoint = federation_fetch_endpoint;
+		}
+
+		public String getFederation_resolve_endpoint() {
+			return federation_resolve_endpoint;
+		}
+
+		public void setFederation_resolve_endpoint(String federation_resolve_endpoint) {
+			this.federation_resolve_endpoint = federation_resolve_endpoint;
+		}
+
+		public String getFederation_trust_mark_status_endpoint() {
+			return federation_trust_mark_status_endpoint;
+		}
+
+		public void setFederation_trust_mark_status_endpoint(String federation_trust_mark_status_endpoint) {
+			this.federation_trust_mark_status_endpoint = federation_trust_mark_status_endpoint;
+		}
+
+		public String getFederation_list_endpoint() {
+			return federation_list_endpoint;
+		}
+
+		public void setFederation_list_endpoint(String federation_list_endpoint) {
+			this.federation_list_endpoint = federation_list_endpoint;
+		}
+
+		public String getFederation_historical_jwks_endpoint() {
+			return federation_historical_jwks_endpoint;
+		}
+
+		public void setFederation_historical_jwks_endpoint(String federation_historical_jwks_endpoint) {
+			this.federation_historical_jwks_endpoint = federation_historical_jwks_endpoint;
 		}
 	}
 

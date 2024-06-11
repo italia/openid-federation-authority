@@ -39,7 +39,7 @@ public class JwtUtil {
 	@Autowired
 	private KeyStoreConfig keyConfig;
 
-	@Value("${oidc.hosts.trust-anchor}")
+	@Value("${fed-config.hosts.federation-entity}")
 	private String basePath;
 
 	

@@ -2,6 +2,7 @@ package it.ipzs.fedauthority.controller;
 
 import java.text.ParseException;
 
+import it.ipzs.fedauthority.util.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -36,7 +37,16 @@ public class OnboardEntityController {
 
 	@PostMapping()
 	public ResponseEntity<OnboardEntity> save(@RequestBody OnboardEntity onboardEntity) throws ParseException, JOSEException {
-		String wellknownURL = onboardEntity.getUrl() + "/" + OIDCConstants.OIDC_FEDERATION_WELLKNOWN_URL;
+		if(StringUtil.isBlank(onboardEntity.getUrl())){
+			log.error("missing url param in onboard request: {}", onboardEntity);
+			return ResponseEntity.badRequest().build();
+		}
+		String wellknownURL = null;
+		if(onboardEntity.getUrl().endsWith("/"))
+			wellknownURL = onboardEntity.getUrl() + OIDCConstants.OIDC_FEDERATION_WELLKNOWN_URL;
+		else {
+			wellknownURL = onboardEntity.getUrl()+ "/" + OIDCConstants.OIDC_FEDERATION_WELLKNOWN_URL;
+		}
 		String wellknown = webclient.get()
 	            .uri(wellknownURL)
 	            .retrieve().bodyToMono(String.class).block();

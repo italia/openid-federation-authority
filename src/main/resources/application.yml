@@ -10,11 +10,12 @@ keys:
   path: ${keys.directory-path}/trustanchor-pp-key-jwk.json
   public-jwk-set-path: ${keys.directory-path}/trustanchor-pp-public-jwk.json
   revoked-jwk-set-path: ${keys.directory-path}/revoked-jwk.json
-oidc:
+fed-config:
    hosts:
       trust-anchor: 127.0.0.1
       cie-provider: 127.0.0.1
       relying-party: 127.0.0.1
+      federation-entity: 127.0.0.1
 
       
    # required for onboarding checks and also for all the leafs
@@ -22,22 +23,28 @@ oidc:
 
    # List of trust anchors
    trust-anchors:
-   - ${oidc.default-trust-anchor}
+   - ${fed-config.default-trust-anchor}
 
    # Map of known OPs and related Trust Anchor.
    spid-providers:
-     - subject: "http://${oidc.hosts.trust-anchor}:8000/oidc/op/"
-       trust-anchor: ${oidc.default-trust-anchor}
+     - subject: "http://${fed-config.hosts.trust-anchor}:8000/oidc/op/"
+       trust-anchor: ${fed-config.default-trust-anchor}
    cie-providers:
-     - subject: "http://${oidc.hosts.cie-provider}:8002/oidc/op/"
-       trust-anchor: ${oidc.default-trust-anchor}
+     - subject: "http://${fed-config.hosts.cie-provider}:8002/oidc/op/"
+       trust-anchor: ${fed-config.default-trust-anchor}
 
    federation-entity:
-     homepage-uri: "https://${oidc.hosts.trust-anchor}"
+     homepage-uri: "https://${fed-config.hosts.federation-entity}"
      organization-name: "Istituto Poligrafico e Zecca di Stato"
-     policy-uri: "https://${oidc.hosts.trust-anchor}"
-     tos-uri: "https://${oidc.hosts.trust-anchor}"
-     logo-uri:  "https://${oidc.hosts.trust-anchor}/public/logo.svg"
+     policy-uri: "https://${fed-config.hosts.federation-entity}"
+     tos-uri: "https://${fed-config.hosts.federation-entity}"
+     logo-uri:  "https://${fed-config.hosts.federation-entity}/public/logo.svg"
+     federation_list_endpoint: "https://${fed-config.hosts.federation-entity}/list"
+     federation_fetch_endpoint: "https://${fed-config.hosts.federation-entity}/fetch"
+     federation_trust_mark_status_endpoint: "https://${fed-config.hosts.federation-entity}/status"
+     federation_resolve_endpoint: "https://${fed-config.hosts.federation-entity}/resolve"
+     federation_historical_jwks_endpoint: "https://${fed-config.hosts.federation-entity}/historical-jwks"
+
      
    relying-party:
       application-name: "SpringBoot RP Sample"
@@ -50,9 +57,9 @@ oidc:
       - offline_access
       token-endpoint-auth-method: 
       - private_key_jwt
-      client-id: "http://${oidc.hosts.relying-party}:8080"
+      client-id: "http://${fed-config.hosts.relying-party}:8080"
       redirect-uris:
-      - "http://${oidc.hosts.relying-party}:8080/callback"
+      - "http://${fed-config.hosts.relying-party}:8080/callback"
       jwk-file-path: ${keys.directory-path}/it-trustanchor-jwk.json
       trust-marks-file-path: ${keys.directory-path}/it-trustanchor-trust-marks.json
 
@@ -60,9 +67,9 @@ oidc:
       credential-issuer: 127.0.0.1:8080
       dpop-signing-alg-values-supported:
       - RS256
-      authorization-endpoint: "http://${oidc.openid-credential-issuer.credential-issuer}/authorize"
-      token-endpoint: "http://${oidc.openid-credential-issuer.credential-issuer}/token"
-      pushed-authorization-request-endpoint: "http://${oidc.openid-credential-issuer.credential-issuer}/as/par"
-      credential-endpoint: "http://${oidc.openid-credential-issuer.credential-issuer}/credential"
+      authorization-endpoint: "http://${fed-config.openid-credential-issuer.credential-issuer}/authorize"
+      token-endpoint: "http://${fed-config.openid-credential-issuer.credential-issuer}/token"
+      pushed-authorization-request-endpoint: "http://${fed-config.openid-credential-issuer.credential-issuer}/as/par"
+      credential-endpoint: "http://${fed-config.openid-credential-issuer.credential-issuer}/credential"
       jwk-file-path: ${user.home}/key/eudi-pp-key-jwk.json
-      sub: "http://${oidc.hosts.relying-party}:8080/ci"
+      sub: "http://${fed-config.hosts.relying-party}:8080/ci"

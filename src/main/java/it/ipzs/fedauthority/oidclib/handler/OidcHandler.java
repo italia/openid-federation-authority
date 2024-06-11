@@ -386,10 +386,6 @@ public class OidcHandler {
 		return options.getJwk();
 	}
 
-	public String retrieveRelyingPartyEncryptionJWK() {
-		return options.getEncrJwk();
-	}
-
 	public OIDCCredentialIssuerOptions getCredentialOptions() {
 		return credentialOptions;
 	}
@@ -881,7 +877,6 @@ public class OidcHandler {
 		// TODO: JWSAlgorithm via default?
 
 		String confJwk = options.getJwk();
-		String encrJwk = options.getEncrJwk();
 
 		String generalJwk = credentialOptions.getJwk();
 
@@ -907,47 +902,7 @@ public class OidcHandler {
 
 		JWKSet jwkSet = new JWKSet(List.of(jwk));
 
-		JSONObject rpJson = new JSONObject();
-
-		rpJson.put("jwks", JWTHelper.getJWKSetAsJSONObject(jwkSet, false));
-		rpJson.put("application_type", options.getApplicationType());
-		rpJson.put("client_name", options.getApplicationName());
-		rpJson.put("client_id", sub);
-		rpJson.put("client_registration_types", JSONUtil.asJSONArray("automatic"));
-		rpJson.put("contacts", options.getContacts());
-		rpJson.put("grant_types", RelyingPartyOptions.SUPPORTED_GRANT_TYPES);
-		rpJson.put("response_types", RelyingPartyOptions.SUPPORTED_RESPONSE_TYPES);
-		rpJson.put("redirect_uris", options.getRedirectUris());
-		rpJson.put("default_max_age", 1111);
-		rpJson.put("authorization_signed_response_alg", List.of( "RS256",
-				"ES256"));
-		rpJson.put("authorization_encrypted_response_alg", List.of("RSA-OAEP", "RSA-OAEP-256"));
-		rpJson.put("authorization_encrypted_response_enc",
-				List.of("A128CBC-HS256", "A192CBC-HS384", "A256CBC-HS512", "A128GCM", "A192GCM", "A256GCM"));
-		rpJson.put("subject_type", "pairwise");
-		rpJson.put("require_auth_time", true);
-		rpJson.put("id_token_signed_response_alg", List.of("RS256", "ES256"));
-		rpJson.put("id_token_encrypted_response_alg", List.of("RSA-OAEP", "RSA-OAEP-256"));
-		rpJson.put("id_token_encrypted_response_enc",
-				List.of("A128CBC-HS256", "A192CBC-HS384", "A256CBC-HS512", "A128GCM", "A192GCM", "A256GCM"));
-		rpJson.put("redirect_uris", List.of(options.getRedirectUris()));
-		rpJson.put("request_uris", List.of(options.getRequestUris()));
-		String presDef1 = "{\"id\":\"pid-sd-jwt:unique_id+given_name+family_name\",\"input_descriptors\":[{\"id\":\"pid-sd-jwt:unique_id+given_name+family_name\",\"format\":{\"constraints\":{\"fields\":[{\"filter\":{\"const\":\"PersonIdentificationData\",\"type\":\"string\"},\"path\":[\"$.sd-jwt.type\"]},{\"filter\":{\"type\":\"object\"},\"path\":[\"$.sd-jwt.cnf\"]},{\"intent_to_retain\":\"true\",\"path\":[\"$.sd-jwt.family_name\"]},{\"intent_to_retain\":\"true\",\"path\":[\"$.sd-jwt.given_name\"]},{\"intent_to_retain\":\"true\",\"path\":[\"$.sd-jwt.unique_id\"]}],\"limit_disclosure\":\"required\"},\"jwt\":{\"alg\":[\"EdDSA\",\"ES256\"]}}}]}";
-		JSONObject pd1 = new JSONObject(presDef1);
-		String presDef2 = "{\"id\":\"mDL-sample-req\",\"input_descriptors\":[{\"format\":{\"constraints\":{\"fields\":[{\"filter\":{\"const\":\"org.iso.18013.5.1.mDL\",\"type\":\"string\"},\"path\":[\"$.mdoc.doctype\"]},{\"filter\":{\"const\":\"org.iso.18013.5.1\",\"type\":\"string\"},\"path\":[\"$.mdoc.namespace\"]},{\"intent_to_retain\":\"false\",\"path\":[\"$.mdoc.family_name\"]},{\"intent_to_retain\":\"false\",\"path\":[\"$.mdoc.portrait\"]},{\"intent_to_retain\":\"false\",\"path\":[\"$.mdoc.driving_privileges\"]}],\"limit_disclosure\":\"required\"},\"mso_mdoc\":{\"alg\":[\"EdDSA\",\"ES256\"]}},\"id\":\"mDL\"}]}";
-		JSONObject pd2 = new JSONObject(presDef2);
-		JSONArray presDefArray = new JSONArray();
-		presDefArray.put(pd1);
-		presDefArray.put(pd2);
-		rpJson.put("presentation_definitions", presDefArray);
-		rpJson.put("vp_formats", new JSONObject("{\"jwt_vp_json\":{\"alg\":[\"EdDSA\",\"ES256K\"]}}"));
-		
-
 		JSONObject metadataJson = new JSONObject();
-
-		// metadataJson.put(OIDCConstants.OPENID_WALLET_RP, rpJson);
-
-		metadataJson.put("federation_entity", federationEntityOptions.toJSON());
 
 		metadataJson.put("federation_entity", federationEntityOptions.toJSON());
 
@@ -971,9 +926,6 @@ public class OidcHandler {
 			JSONArray tm = new JSONArray(options.getTrustMarks());
 
 			json.put("trust_marks", tm);
-
-			// With the trust marks I've all the elements to store this RelyingParty into
-			// FederationEntity table
 
 			step = WellKnownData.STEP_COMPLETE;
 

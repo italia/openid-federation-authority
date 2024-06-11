@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import it.ipzs.fedauthority.oidclib.OIDCConstants;
-import it.ipzs.fedauthority.oidclib.OidcConfig;
+import it.ipzs.fedauthority.oidclib.FedConfig;
 import it.ipzs.fedauthority.oidclib.OidcWrapper;
 import it.ipzs.fedauthority.oidclib.schemas.WellKnownData;
 import jakarta.servlet.http.HttpServletRequest;
@@ -26,7 +26,7 @@ public class WellKnownController {
 	private static Logger logger = LoggerFactory.getLogger(WellKnownController.class);
 
 	@Autowired
-	private OidcConfig oidcConfig;
+	private FedConfig fedConfig;
 
 	@Autowired
 	private OidcWrapper oidcWrapper;
@@ -40,7 +40,7 @@ public class WellKnownController {
 		WellKnownData wellKnown = oidcWrapper.getWellKnownData(request.getRequestURL().toString(), jsonMode);
 		if (wellKnown.getStep() == WellKnownData.STEP_ONLY_JWKS) {
 			logger.info("Generated jwk. Please add it into 'application.yaml' or save as '"
-					+ oidcConfig.getRelyingParty().getJwkFilePath() + "'.\n" + wellKnown.getValue());
+					+ fedConfig.getRelyingParty().getJwkFilePath() + "'.\n" + wellKnown.getValue());
 
 			String body = new JSONObject().put("ERROR", "Do OnBoarding configuration").toString();
 

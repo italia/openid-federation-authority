@@ -105,12 +105,6 @@ public class GlobalOptions<T extends GlobalOptions<T>> {
 	}
 
 	protected void validate() throws OIDCException {
-		for (String alg : allowedEncryptionAlgs) {
-			if (!ArrayUtil.contains(SUPPORTED_ENCRYPTION_ALGS, alg)) {
-				throw new ConfigException(
-					"allowedEncryptionAlg %s is not supported", alg);
-			}
-		}
 
 		if (!allowedEncryptionAlgs.contains(jweDefaultAlgorithm)) {
 			throw new ConfigException(

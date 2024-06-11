@@ -44,7 +44,7 @@ public class OidcWrapper {
 	private static Logger logger = LoggerFactory.getLogger(OidcWrapper.class);
 
 	@Autowired
-	private OidcConfig oidcConfig;
+	private FedConfig fedConfig;
 
 	@Autowired
 	private H2PersistenceImpl persistenceImpl;
@@ -137,34 +137,8 @@ public class OidcWrapper {
 		return parsedJWK;
 	}
 
-	public JWK getRelyingPartyEncryptionJWK() throws ParseException {
-		String jwk = oidcHandler.retrieveRelyingPartyEncryptionJWK();
-		JWK parsedJWK = null;
-		try {
-			parsedJWK = JWK.parse(jwk);
-		} catch (ParseException e) {
-			logger.error("", e);
-			throw e;
-		}
-
-		return parsedJWK;
-	}
-
 	public JWK getCredentialIssuerJWK() throws ParseException {
 		String credJwk = oidcHandler.getCredentialOptions().getJwk();
-		JWK parsedJWK = null;
-		try {
-			parsedJWK = JWK.parse(credJwk);
-		} catch (ParseException e) {
-			logger.error("", e);
-			throw e;
-		}
-
-		return parsedJWK;
-	}
-
-	public JWK getMdocCredentialIssuerJWK() throws ParseException {
-		String credJwk = oidcHandler.getCredentialOptions().getMdocJwk();
 		JWK parsedJWK = null;
 		try {
 			parsedJWK = JWK.parse(credJwk);
@@ -188,7 +162,7 @@ public class OidcWrapper {
 		RestTemplate restTemplate = new RestTemplate();
 
 		try {
-			ResponseEntity<String> entity = restTemplate.getForEntity(new URI(oidcConfig.getFederationTrustChainUrl()),
+			ResponseEntity<String> entity = restTemplate.getForEntity(new URI(fedConfig.getFederationTrustChainUrl()),
 					String.class);
 			String fedTc = entity.getBody();
 
@@ -214,7 +188,7 @@ public class OidcWrapper {
 
 		try {
 			ResponseEntity<String> entity = restTemplate.getForEntity(new URI(
-							oidcConfig.getFederationTrustChainUrl()),
+							fedConfig.getFederationTrustChainUrl()),
 					String.class);
 			String fedTc = entity.getBody();
 			logger.info("> HTTP status code {}", entity.getStatusCode());
@@ -237,51 +211,52 @@ public class OidcWrapper {
 
 	@PostConstruct
 	private void postConstruct() throws OIDCException {
-		String jwk = readFile(oidcConfig.getRelyingParty().getJwkFilePath());
-		String encrJwk = readFile(oidcConfig.getRelyingParty().getEncrJwkFilePath());
+		String jwk = readFile(fedConfig.getRelyingParty().getJwkFilePath());
 		String trustMarks = readFile(
-				oidcConfig.getRelyingParty().getTrustMarksFilePath());
+				fedConfig.getRelyingParty().getTrustMarksFilePath());
 
 		logger.debug("final jwk: {}", jwk);
 		logger.debug("final trust_marks: {}", trustMarks);
 
 		RelyingPartyOptions options = new RelyingPartyOptions()
-				.setDefaultTrustAnchor(oidcConfig.getDefaultTrustAnchor())
-				.setCIEProviders(oidcConfig.getIdentityProviders(OIDCProfile.CIE))
-				.setSPIDProviders(oidcConfig.getIdentityProviders(OIDCProfile.SPID))
-				.setTrustAnchors(oidcConfig.getTrustAnchors())
-				.setApplicationName(oidcConfig.getRelyingParty().getApplicationName())
-				.setClientId(oidcConfig.getRelyingParty().getClientId())
-				.setRedirectUris(oidcConfig.getRelyingParty().getRedirectUris())
-				.setRequestUris(oidcConfig.getRelyingParty().getRequestUris())
-				.setContacts(oidcConfig.getRelyingParty().getContacts())
+				.setDefaultTrustAnchor(fedConfig.getDefaultTrustAnchor())
+				.setCIEProviders(fedConfig.getIdentityProviders(OIDCProfile.CIE))
+				.setSPIDProviders(fedConfig.getIdentityProviders(OIDCProfile.SPID))
+				.setTrustAnchors(fedConfig.getTrustAnchors())
+				.setApplicationName(fedConfig.getRelyingParty().getApplicationName())
+				.setClientId(fedConfig.getRelyingParty().getClientId())
+				.setRedirectUris(fedConfig.getRelyingParty().getRedirectUris())
+				.setRequestUris(fedConfig.getRelyingParty().getRequestUris())
+				.setContacts(fedConfig.getRelyingParty().getContacts())
 				.setJWK(jwk)
-				.setEncrJWK(encrJwk)
 				.setTrustMarks(trustMarks);
 
-		String credJwk = readFile(oidcConfig.getOpenidCredentialIssuer().getJwkFilePath());
-		String mdocCredJwk = readFile(oidcConfig.getOpenidCredentialIssuer().getMdocJwkFilePath());
+		String credJwk = readFile(fedConfig.getOpenidCredentialIssuer().getJwkFilePath());
 
 		OIDCCredentialIssuerOptions credentialOptions = OIDCCredentialIssuerOptions.builder()
 				.pushedAuthorizationRequestEndpoint(
-						oidcConfig.getOpenidCredentialIssuer().getPushedAuthorizationRequestEndpoint())
-				.credentialEndpoint(oidcConfig.getOpenidCredentialIssuer().getCredentialEndpoint())
-				.credentialIssueUrl(oidcConfig.getOpenidCredentialIssuer().getCredentialIssuer())
-				.tokenEndpoint(oidcConfig.getOpenidCredentialIssuer().getTokenEndpoint())
-				.authorizationEndpoint(oidcConfig.getOpenidCredentialIssuer().getAuthorizationEndpoint())
+						fedConfig.getOpenidCredentialIssuer().getPushedAuthorizationRequestEndpoint())
+				.credentialEndpoint(fedConfig.getOpenidCredentialIssuer().getCredentialEndpoint())
+				.credentialIssueUrl(fedConfig.getOpenidCredentialIssuer().getCredentialIssuer())
+				.tokenEndpoint(fedConfig.getOpenidCredentialIssuer().getTokenEndpoint())
+				.authorizationEndpoint(fedConfig.getOpenidCredentialIssuer().getAuthorizationEndpoint())
 				.credentialsSupported(generateCredentialSupportedList())
 				.jwk(credJwk)
-				.mdocJwk(mdocCredJwk)
-				.sub(oidcConfig.getOpenidCredentialIssuer().getSub())
-				.trustChain(oidcConfig.getOpenidCredentialIssuer().getTrustChain())
+				.sub(fedConfig.getOpenidCredentialIssuer().getSub())
+				.trustChain(fedConfig.getOpenidCredentialIssuer().getTrustChain())
 				.build();
 
 		FederationEntityOptions fedEntOptions = new FederationEntityOptions();
-		fedEntOptions.setHomepage_uri(oidcConfig.getFederationEntity().getHomepageUri());
-		fedEntOptions.setTos_uri(oidcConfig.getFederationEntity().getTosUri());
-		fedEntOptions.setPolicy_uri(oidcConfig.getFederationEntity().getPolicyUri());
-		fedEntOptions.setLogo_uri(oidcConfig.getFederationEntity().getLogoUri());
-		fedEntOptions.setOrganization_name(oidcConfig.getFederationEntity().getOrganizationName());
+		fedEntOptions.setHomepage_uri(fedConfig.getFederationEntity().getHomepageUri());
+		fedEntOptions.setTos_uri(fedConfig.getFederationEntity().getTosUri());
+		fedEntOptions.setPolicy_uri(fedConfig.getFederationEntity().getPolicyUri());
+		fedEntOptions.setLogo_uri(fedConfig.getFederationEntity().getLogoUri());
+		fedEntOptions.setOrganization_name(fedConfig.getFederationEntity().getOrganizationName());
+		fedEntOptions.setFederation_fetch_endpoint(fedConfig.getFederationEntity().getFederation_fetch_endpoint());
+		fedEntOptions.setFederation_historical_jwks_endpoint(fedConfig.getFederationEntity().getFederation_historical_jwks_endpoint());
+		fedEntOptions.setFederation_resolve_endpoint(fedConfig.getFederationEntity().getFederation_resolve_endpoint());
+		fedEntOptions.setFederation_list_endpoint(fedConfig.getFederationEntity().getFederation_list_endpoint());
+		fedEntOptions.setFederation_trust_mark_status_endpoint(fedConfig.getFederationEntity().getFederation_trust_mark_status_endpoint());
 
 		oidcHandler = new OidcHandler(options, persistenceImpl, credentialOptions, fedEntOptions);
 //		try {
@@ -314,20 +289,20 @@ public class OidcWrapper {
 		CredentialType cred = new CredentialType();
 
 		cred.setId(it.ipzs.fedauthority.dto.CredentialType.EHIC.value().toLowerCase() + "."
-				+ oidcConfig.getOpenidCredentialIssuer().getId());
+				+ fedConfig.getOpenidCredentialIssuer().getId());
 
 		cred.setFormat("vc+sd-jwt");
 		DisplayConf d1 = DisplayConf.builder().name("QEAA Issuer").locale("it-IT").background_color("#12107c")
 				.text_color("#FFFFFF")
 				.logo(LogoConf.builder().url(
-						"https://" + oidcConfig.getOpenidCredentialIssuer().getCredentialIssuer() + "/public/logo.svg")
+						"https://" + fedConfig.getOpenidCredentialIssuer().getCredentialIssuer() + "/public/logo.svg")
 						.alt_text("logo").build())
 				.build();
 
 		DisplayConf d2 = DisplayConf.builder().name("QEAA Issuer").locale("en-US").background_color("#12107c")
 				.text_color("#FFFFFF")
 				.logo(LogoConf.builder().url(
-						"https://" + oidcConfig.getOpenidCredentialIssuer().getCredentialIssuer() + "/public/logo.svg")
+						"https://" + fedConfig.getOpenidCredentialIssuer().getCredentialIssuer() + "/public/logo.svg")
 						.alt_text("logo").build())
 				.build();
 		cred.setDisplay(List.of(d1, d2));
@@ -406,13 +381,13 @@ public class OidcWrapper {
 		CredentialType cred = new CredentialType();
 
 		cred.setId(it.ipzs.fedauthority.dto.CredentialType.EDC.value().toLowerCase() + "."
-				+ oidcConfig.getOpenidCredentialIssuer().getId());
+				+ fedConfig.getOpenidCredentialIssuer().getId());
 
 		cred.setFormat("vc+sd-jwt");
 		DisplayConf d1 = DisplayConf.builder().name("QEAA Issuer").locale("it-IT").background_color("#12107c")
 				.text_color("#FFFFFF")
 				.logo(LogoConf.builder()
-						.url("https://" + oidcConfig.getOpenidCredentialIssuer().getCredentialIssuer()
+						.url("https://" + fedConfig.getOpenidCredentialIssuer().getCredentialIssuer()
 								+ "/public/logo.svg")
 						.alt_text("logo").build())
 				.build();
@@ -420,7 +395,7 @@ public class OidcWrapper {
 		DisplayConf d2 = DisplayConf.builder().name("QEAA Issuer").locale("en-US").background_color("#12107c")
 				.text_color("#FFFFFF")
 				.logo(LogoConf.builder().url(
-								"https://" + oidcConfig.getOpenidCredentialIssuer().getCredentialIssuer() + "/public/logo.svg")
+								"https://" + fedConfig.getOpenidCredentialIssuer().getCredentialIssuer() + "/public/logo.svg")
 						.alt_text("logo").build())
 				.build();
 		cred.setDisplay(List.of(d1,d2));
@@ -474,20 +449,20 @@ public class OidcWrapper {
 		CredentialType cred = new CredentialType();
 
 		cred.setId(it.ipzs.fedauthority.dto.CredentialType.MDL.value().toLowerCase() + "."
-				+ oidcConfig.getOpenidCredentialIssuer().getId());
+				+ fedConfig.getOpenidCredentialIssuer().getId());
 
 		cred.setFormat(format);
 		DisplayConf d1 = DisplayConf.builder().name("QEAA Issuer").locale("it-IT").background_color("#12107c")
 				.text_color("#FFFFFF")
 				.logo(LogoConf.builder().url(
-						"https://" + oidcConfig.getOpenidCredentialIssuer().getCredentialIssuer() + "/public/logo.svg")
+						"https://" + fedConfig.getOpenidCredentialIssuer().getCredentialIssuer() + "/public/logo.svg")
 						.alt_text("logo").build())
 				.build();
 
 		DisplayConf d2 = DisplayConf.builder().name("QEAA Issuer").locale("en-US").background_color("#12107c")
 				.text_color("#FFFFFF")
 				.logo(LogoConf.builder().url(
-						"https://" + oidcConfig.getOpenidCredentialIssuer().getCredentialIssuer() + "/public/logo.svg")
+						"https://" + fedConfig.getOpenidCredentialIssuer().getCredentialIssuer() + "/public/logo.svg")
 						.alt_text("logo").build())
 				.build();
 		cred.setDisplay(List.of(d1, d2));
@@ -573,14 +548,10 @@ public class OidcWrapper {
 	}
 
 	public void reloadKeys() {
-		String jwk = readFile(oidcConfig.getRelyingParty().getJwkFilePath());
-		String encrJwk = readFile(oidcConfig.getRelyingParty().getEncrJwkFilePath());
-		String credJwk = readFile(oidcConfig.getOpenidCredentialIssuer().getJwkFilePath());
-		String mdocCredJwk = readFile(oidcConfig.getOpenidCredentialIssuer().getMdocJwkFilePath());
+		String jwk = readFile(fedConfig.getRelyingParty().getJwkFilePath());
+		String credJwk = readFile(fedConfig.getOpenidCredentialIssuer().getJwkFilePath());
 		this.oidcHandler.getCredentialOptions().setJwk(credJwk);
 		this.oidcHandler.getRelyingPartyOptions().setJWK(jwk);
-		this.oidcHandler.getRelyingPartyOptions().setEncrJWK(encrJwk);
-		this.oidcHandler.getCredentialOptions().setMdocJwk(mdocCredJwk);
 		logger.debug("key reloaded!");
 	}
 

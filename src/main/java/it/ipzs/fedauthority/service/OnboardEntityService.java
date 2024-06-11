@@ -27,7 +27,7 @@ public class OnboardEntityService {
 	@Autowired
 	JwtUtil jwtUtil;
 
-	@Value("${oidc.hosts.trust-anchor}")
+	@Value("${fed-config.hosts.trust-anchor}")
 	private String sourceEndpointBasePath;
 
 	public OnboardEntity save(OnboardEntity onboardEntity) {

@@ -64,17 +64,7 @@ public class ClaimOptions {
 	}
 
 	public JSONObject toJSON() {
-		JSONObject idToken = new JSONObject();
 
-		for (OptionItem item : getSectionItems(ClaimSection.ID_TOKEN)) {
-			JSONObject value = new JSONObject();
-
-			if (item.getEssential().isPresent()) {
-				value.put("essential", item.getEssential().get());
-			}
-
-			idToken.put(item.getClaimItem().getAlias(), value);
-		}
 
 		JSONObject userInfo = new JSONObject();
 
@@ -89,7 +79,6 @@ public class ClaimOptions {
 		}
 
 		return new JSONObject()
-			.put("id_token", idToken)
 			.put("userinfo", userInfo);
 	}
 
