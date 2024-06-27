@@ -10,7 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import it.ipzs.fedauthority.oidclib.GlobalOptions;
-import it.ipzs.fedauthority.oidclib.OIDCConstants;
+import it.ipzs.fedauthority.oidclib.OidConstants;
 import it.ipzs.fedauthority.oidclib.exception.EntityException;
 import it.ipzs.fedauthority.oidclib.exception.OIDCException;
 import it.ipzs.fedauthority.util.StringUtil;
@@ -35,7 +35,7 @@ public class EntityHelper {
 		String url = StringUtil.ensureTrailingSlash(
 				subject
 			).concat(
-				OIDCConstants.OIDC_FEDERATION_WELLKNOWN_URL
+				OidConstants.OIDC_FEDERATION_WELLKNOWN_URL
 			);
 
 		logger.info("Starting Entity Configuration Request for {}", url);

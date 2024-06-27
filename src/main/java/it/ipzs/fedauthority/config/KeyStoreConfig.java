@@ -6,8 +6,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
+import java.security.interfaces.ECPublicKey;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.text.ParseException;
@@ -16,6 +19,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.jwk.*;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,12 +28,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
-import com.nimbusds.jose.jwk.JWK;
-import com.nimbusds.jose.jwk.JWKSet;
-import com.nimbusds.jose.jwk.KeyUse;
-import com.nimbusds.jose.jwk.RSAKey;
-
-import it.ipzs.fedauthority.oidclib.OidcWrapper;
+import it.ipzs.fedauthority.oidclib.OidWrapper;
 import lombok.extern.slf4j.Slf4j;
 
 @Component
@@ -47,8 +47,17 @@ public class KeyStoreConfig implements CommandLineRunner {
 	@Value("${keys.revoked-jwk-set-path}")
 	private String revokedKeysFilePath;
 
+	@Value("${keys.config.type")
+	private String keyTypeConfig;
+
+	@Value("${keys.config.rsa.keySize:2048}")
+	private Integer rsaKeySize;
+
+	@Value("${keys.config.ec.curveType:P-256}")
+	private String ecCurveType;
+
 	@Autowired
-	private OidcWrapper oidcWrapper;
+	private OidWrapper oidcWrapper;
 
 	@Override
 	public void run(String... args) throws Exception {
@@ -63,18 +72,16 @@ public class KeyStoreConfig implements CommandLineRunner {
 		}
 
 		if (!new File(keyFilePath).exists()) {
-			KeyPairGenerator gen = KeyPairGenerator.getInstance("RSA");
-			gen.initialize(2048);
-			KeyPair keyPair = gen.generateKeyPair();
+			JWK jwk = null;
 
-			Calendar cal = Calendar.getInstance();
-			cal.add(Calendar.YEAR, 1);
-			Date validityEndDate = cal.getTime();
-
-			JWK jwk = new RSAKey.Builder((RSAPublicKey) keyPair.getPublic())
-					.privateKey((RSAPrivateKey) keyPair.getPrivate()).keyUse(KeyUse.SIGNATURE)
-					.keyID(UUID.randomUUID().toString()).issueTime(new Date()).expirationTime(validityEndDate)
-					.keyIDFromThumbprint().build();
+			if("RSA".equals(keyTypeConfig)){
+				jwk = generateRsaSigningKey();
+			} else if("EC".equals(keyTypeConfig)) {
+				jwk = generateEcSigningKey();
+			} else {
+				log.error("Algorithm not supported {}", keyTypeConfig);
+				throw new NoSuchAlgorithmException("Algorithm not supported " + keyTypeConfig);
+			}
 
 			try (FileWriter fw = new FileWriter(keyFilePath)) {
 
@@ -105,6 +112,69 @@ public class KeyStoreConfig implements CommandLineRunner {
 		}
 
 	}
+
+	private JWK generateEcSigningKey() {
+		KeyPairGenerator gen = null;
+		try {
+			gen = KeyPairGenerator.getInstance("EC");
+		} catch (NoSuchAlgorithmException e) {
+			throw new RuntimeException(e);
+		}
+		Curve curve = null;
+		try {
+			curve = Curve.parse(ecCurveType);
+		} catch (Exception e) {
+			log.error("cannot parse EC curve type " + ecCurveType, e);
+			throw new RuntimeException("Cannot parse EC curve type");
+		}
+        try {
+            gen.initialize(curve.toECParameterSpec());
+        } catch (InvalidAlgorithmParameterException e) {
+            throw new RuntimeException(e);
+        }
+        KeyPair keyPair = gen.generateKeyPair();
+
+		Calendar cal = Calendar.getInstance();
+		cal.add(Calendar.YEAR, 1);
+		Date validityEndDate = cal.getTime();
+
+		try {
+			JWK jwk = new ECKey.Builder(curve, (ECPublicKey) keyPair.getPublic())
+					.privateKey((RSAPrivateKey) keyPair.getPrivate()).keyUse(KeyUse.SIGNATURE)
+					.keyID(UUID.randomUUID().toString()).issueTime(new Date()).expirationTime(validityEndDate)
+					.keyIDFromThumbprint().build();
+			log.debug("key EC generated - {}", jwk.getKeyID());
+			return jwk;
+		} catch (JOSEException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	private JWK generateRsaSigningKey() {
+        KeyPairGenerator gen = null;
+        try {
+            gen = KeyPairGenerator.getInstance("RSA");
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+        gen.initialize(rsaKeySize);
+		KeyPair keyPair = gen.generateKeyPair();
+
+		Calendar cal = Calendar.getInstance();
+		cal.add(Calendar.YEAR, 1);
+		Date validityEndDate = cal.getTime();
+
+        try {
+            JWK jwk = new RSAKey.Builder((RSAPublicKey) keyPair.getPublic())
+                    .privateKey((RSAPrivateKey) keyPair.getPrivate()).keyUse(KeyUse.SIGNATURE)
+                    .keyID(UUID.randomUUID().toString()).issueTime(new Date()).expirationTime(validityEndDate)
+                    .keyIDFromThumbprint().build();
+			log.debug("key RSA generated - {}", jwk.getKeyID());
+			return jwk;
+        } catch (JOSEException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
 	public JWK loadKey() {
 

@@ -24,7 +24,7 @@ import com.nimbusds.jose.jwk.RSAKey;
 
 import it.ipzs.fedauthority.oidclib.FederationEntityOptions;
 import it.ipzs.fedauthority.oidclib.GlobalOptions;
-import it.ipzs.fedauthority.oidclib.OIDCConstants;
+import it.ipzs.fedauthority.oidclib.OidConstants;
 import it.ipzs.fedauthority.oidclib.OIDCCredentialIssuerOptions;
 import it.ipzs.fedauthority.oidclib.RelyingPartyOptions;
 import it.ipzs.fedauthority.oidclib.callback.RelyingPartyLogoutCallback;
@@ -35,7 +35,7 @@ import it.ipzs.fedauthority.oidclib.exception.TrustChainException;
 import it.ipzs.fedauthority.oidclib.helper.EntityHelper;
 import it.ipzs.fedauthority.oidclib.helper.JWTHelper;
 import it.ipzs.fedauthority.oidclib.helper.OAuth2Helper;
-import it.ipzs.fedauthority.oidclib.helper.OIDCHelper;
+import it.ipzs.fedauthority.oidclib.helper.OidHelper;
 import it.ipzs.fedauthority.oidclib.helper.PKCEHelper;
 import it.ipzs.fedauthority.oidclib.model.AuthnRequest;
 import it.ipzs.fedauthority.oidclib.model.AuthnToken;
@@ -58,19 +58,19 @@ import it.ipzs.fedauthority.oidclib.util.ListUtil;
 import it.ipzs.fedauthority.oidclib.util.Validator;
 
 
-public class OidcHandler {
+public class OidHandler {
 
-	private static final Logger logger = LoggerFactory.getLogger(OidcHandler.class);
+	private static final Logger logger = LoggerFactory.getLogger(OidHandler.class);
 
 	private final RelyingPartyOptions options;
 	private final OIDCCredentialIssuerOptions credentialOptions;
 	private final PersistenceAdapter persistence;
 	private final JWTHelper jwtHelper;
 	private final OAuth2Helper oauth2Helper;
-	private final OIDCHelper oidcHelper;
+	private final OidHelper oidHelper;
 	private final FederationEntityOptions federationEntityOptions;
 
-	public OidcHandler(
+	public OidHandler(
 			RelyingPartyOptions options, PersistenceAdapter persistence, OIDCCredentialIssuerOptions credentialOptions,
 			FederationEntityOptions federationOptions)
 			throws OIDCException {
@@ -86,7 +86,7 @@ public class OidcHandler {
 		this.persistence = persistence;
 		this.jwtHelper = new JWTHelper(options);
 		this.oauth2Helper = new OAuth2Helper(this.jwtHelper);
-		this.oidcHelper = new OIDCHelper(this.jwtHelper);
+		this.oidHelper = new OidHelper(this.jwtHelper);
 		this.federationEntityOptions = federationOptions;
 	}
 
@@ -146,7 +146,7 @@ public class OidcHandler {
 
 		try {
 			entityMetadata = entityConf.getMetadataValue(
-					OIDCConstants.OPENID_RELYING_PARTY);
+					OidConstants.OPENID_RELYING_PARTY);
 
 			if (entityMetadata.isEmpty()) {
 				throw new OIDCException("Entity metadata is empty");
@@ -478,9 +478,10 @@ public class OidcHandler {
 
 		JWKSet entityJwks = JWTHelper.getJWKSetFromJSON(entityConf.getJwks());
 
-		JSONObject userInfo = oidcHelper.getUserInfo(
-				state, tokenResponse.getAccessToken(), providerConfiguration, true,
-				entityJwks);
+		JSONObject userInfo = null;
+//		//oidcHelper.getUserInfo(
+//				state, tokenResponse.getAccessToken(), providerConfiguration, true,
+//				entityJwks);
 
 		authnToken.setUserKey(getUserKeyFromUserInfo(userInfo));
 
@@ -720,7 +721,7 @@ public class OidcHandler {
 
 		if (discover) {
 			trustChain = getOrCreateTrustChain(
-					oidcProvider, trustAnchor, OIDCConstants.OPENID_PROVIDER, true);
+					oidcProvider, trustAnchor, OidConstants.OPENID_PROVIDER, true);
 		}
 
 		return trustChain;
@@ -760,7 +761,7 @@ public class OidcHandler {
 			throws OIDCException {
 
 		FederationEntity entityConf = persistence.fetchFederationEntity(
-				subject, OIDCConstants.OPENID_RELYING_PARTY, true);
+				subject, OidConstants.OPENID_RELYING_PARTY, true);
 
 		if (entityConf != null) {
 			return entityConf;
@@ -773,7 +774,7 @@ public class OidcHandler {
 		}
 
 		return persistence.fetchFederationEntity(
-				subject, OIDCConstants.OPENID_RELYING_PARTY, true);
+				subject, OidConstants.OPENID_RELYING_PARTY, true);
 	}
 
 	private JSONObject getRequestedClaims(OIDCProfile profile) {
@@ -781,7 +782,7 @@ public class OidcHandler {
 	}
 
 	private String getSubjectFromWellKnownURL(String url) {
-		int x = url.indexOf(OIDCConstants.OIDC_FEDERATION_WELLKNOWN_URL);
+		int x = url.indexOf(OidConstants.OIDC_FEDERATION_WELLKNOWN_URL);
 
 		if (x > 1) {
 			return url.substring(0, x - 1);
@@ -911,7 +912,7 @@ public class OidcHandler {
 		JWKSet genJwkSet = new JWKSet(List.of(genKey));
 		JSONObject json = new JSONObject();
 
-		json.put("exp", iat + (GlobalOptions.DEFAULT_EXPIRING_MINUTES * 3600 * 365));
+		json.put("exp", iat + (GlobalOptions.getDefaultExpiringMinutes() * 3600 * 365));
 		json.put("iat", iat);
 		json.put("iss", options.getClientId());
 		json.put("sub", options.getClientId());
@@ -942,7 +943,7 @@ public class OidcHandler {
 			entity.setMetadata(json.getJSONObject("metadata").toString());
 			entity.setActive(true);
 			entity.setConstraints("{}");
-			entity.setEntityType(OIDCConstants.OPENID_RELYING_PARTY);
+			entity.setEntityType(OidConstants.OPENID_RELYING_PARTY);
 
 			persistence.storeFederationEntity(entity);
 		}

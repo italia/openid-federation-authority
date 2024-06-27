@@ -132,7 +132,7 @@ public class JWTHelper {
 	 * @return current UTC date time, plus default expiring minutes, as epoch seconds
 	 */
 	public static long getExpiresOn() {
-		return getExpiresOn(GlobalOptions.DEFAULT_EXPIRING_MINUTES);
+		return getExpiresOn(GlobalOptions.getDefaultExpiringMinutes());
 	}
 
 	/**
@@ -499,104 +499,6 @@ public class JWTHelper {
 		} catch (Exception e) {
 			throw new JWTException.Generic(e);
 		}
-	}
-
-	public String decryptJWE(String jwe, JWKSet jwkSet) throws OIDCException {
-		JWEObject jweObject;
-
-		try {
-			jweObject = JWEObject.parse(jwe);
-		}
-		catch (ParseException e) {
-			throw new JWTException.Parse(e);
-		}
-
-		if (logger.isTraceEnabled()) {
-			logger.trace("jwe.header=" + jweObject.getHeader().toString());
-		}
-
-		JWEAlgorithm alg = jweObject.getHeader().getAlgorithm();
-		EncryptionMethod enc = jweObject.getHeader().getEncryptionMethod();
-		String kid = jweObject.getHeader().getKeyID();
-
-		if (alg == null) {
-			alg = JWEAlgorithm.parse(options.getDefaultJWEAlgorithm());
-		}
-
-		if (enc == null) {
-			enc = EncryptionMethod.parse(options.getDefaultJWEEncryption());
-		}
-
-		if (!isValidAlgorithm(alg)) {
-			throw new JWTException.UnsupportedAlgorithm(alg.toString());
-		}
-
-		try {
-			JWK jwk = jwkSet.getKeyByKeyId(kid);
-
-			if (jwk == null) {
-				throw new JWTException.UnknownKid(kid, jwkSet.toString());
-			}
-
-			JWEDecrypter decrypter = getJWEDecrypter(alg, enc, jwk);
-
-			jweObject.decrypt(decrypter);
-		}
-		catch (Exception e) {
-			throw new JWTException.Decryption(e);
-		}
-
-		String jws = jweObject.getPayload().toString();
-
-		if (logger.isDebugEnabled()) {
-			logger.debug("Decrypted JWE as: " + jws);
-		}
-		logger.info("KK Decrypted JWE as: " + jws); //TODO: remove
-
-		return jws;
-	}
-
-	public JSONObject getJWTFromJWE(
-			String jwe, JWKSet mineJWKSet, JWKSet otherJWKSet)
-		throws OIDCException {
-
-		String jws = decryptJWE(jwe, mineJWKSet);
-
-		try {
-			Base64URL[] parts = JOSEObject.split(jws);
-
-			if (parts.length == 3) {
-				SignedJWT signedJWT = new SignedJWT(parts[0], parts[1], parts[2]);
-
-				if (!verifyJWS(signedJWT, otherJWKSet)) {
-					logger.error(
-						"Verification failed for {} with jwks {}", jws,
-						otherJWKSet.toString());
-
-					//TODO: Understand why verify always fails
-					//throw new JWTException.Verifier(
-					//	"Verification failed for " + jws);
-				}
-			}
-			else {
-				logger.warn("jwe {} contains unsigned jws {} ", jwe, jws);
-			}
-
-			return fastParse(jws);
-		}
-		catch (OIDCException e) {
-			throw e;
-		}
-		catch (ParseException e) {
-			throw new JWTException.Parse(e);
-		}
-		catch (Exception e) {
-			throw new JWTException.Generic(e);
-		}
-	}
-
-	public boolean isValidAlgorithm(JWEAlgorithm alg) {
-		return options.getAllowedEncryptionAlgs().contains(alg.toString());
 	}
 
 	public boolean isValidAlgorithm(JWSAlgorithm alg) {

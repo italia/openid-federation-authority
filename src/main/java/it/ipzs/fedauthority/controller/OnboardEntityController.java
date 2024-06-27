@@ -15,7 +15,7 @@ import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jwt.JWTClaimsSet;
 
 import it.ipzs.fedauthority.model.OnboardEntity;
-import it.ipzs.fedauthority.oidclib.OIDCConstants;
+import it.ipzs.fedauthority.oidclib.OidConstants;
 import it.ipzs.fedauthority.service.OnboardEntityService;
 import it.ipzs.fedauthority.util.JwtUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -43,9 +43,9 @@ public class OnboardEntityController {
 		}
 		String wellknownURL = null;
 		if(onboardEntity.getUrl().endsWith("/"))
-			wellknownURL = onboardEntity.getUrl() + OIDCConstants.OIDC_FEDERATION_WELLKNOWN_URL;
+			wellknownURL = onboardEntity.getUrl() + OidConstants.OIDC_FEDERATION_WELLKNOWN_URL;
 		else {
-			wellknownURL = onboardEntity.getUrl()+ "/" + OIDCConstants.OIDC_FEDERATION_WELLKNOWN_URL;
+			wellknownURL = onboardEntity.getUrl()+ "/" + OidConstants.OIDC_FEDERATION_WELLKNOWN_URL;
 		}
 		String wellknown = webclient.get()
 	            .uri(wellknownURL)

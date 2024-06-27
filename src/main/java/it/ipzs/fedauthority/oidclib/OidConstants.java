@@ -1,6 +1,6 @@
 package it.ipzs.fedauthority.oidclib;
 
-public class OIDCConstants {
+public class OidConstants {
 
 	public static final String OIDC_FEDERATION_WELLKNOWN_URL =
 		".well-known/openid-federation";

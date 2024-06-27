@@ -1,5 +1,6 @@
 package it.ipzs.fedauthority.oidclib;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import it.ipzs.fedauthority.oidclib.model.CredentialType;
@@ -18,7 +19,7 @@ public class OIDCCredentialIssuerOptions extends GlobalOptions<OIDCCredentialIss
 	private String tokenEndpoint;
 	private String pushedAuthorizationRequestEndpoint;
 	private String credentialEndpoint;
-	private final List<String> dpopSigningAlgValuesSupported = List.of("RS256");
+	private final List<String> dpopSigningAlgValuesSupported = new ArrayList<>();
 	private List<CredentialType> credentialsSupported;
 	private String trustMarks;
 	private String sub;

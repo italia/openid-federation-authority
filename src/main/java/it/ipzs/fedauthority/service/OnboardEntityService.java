@@ -11,7 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import it.ipzs.fedauthority.dto.EntityConfigurationDto;
-import it.ipzs.fedauthority.model.OidcRoleEnum;
+import it.ipzs.fedauthority.model.RoleEnum;
 import it.ipzs.fedauthority.model.OnboardEntity;
 import it.ipzs.fedauthority.repository.OnboardEntityRepository;
 import it.ipzs.fedauthority.util.JwtUtil;
@@ -74,7 +74,7 @@ public class OnboardEntityService {
 					if (subEntity.getEmail() != null) {
 						JSONObject wrp = new JSONObject();
 						wrp.put("contacts", contacts);
-						metadataPolicy.put(OidcRoleEnum.RELYING_PARTY.getDescription(), wrp);
+						metadataPolicy.put(RoleEnum.RELYING_PARTY.getDescription(), wrp);
 						ec.setMetadataPolicy(metadataPolicy);
 
 					}
@@ -84,14 +84,14 @@ public class OnboardEntityService {
 					if (subEntity.getEmail() != null) {
 						JSONObject wrp = new JSONObject();
 						wrp.put("contacts", contacts);
-						metadataPolicy.put(OidcRoleEnum.CREDENTIAL_ISSUER.getDescription(), wrp);
+						metadataPolicy.put(RoleEnum.CREDENTIAL_ISSUER.getDescription(), wrp);
 						ec.setMetadataPolicy(metadataPolicy);
 
 					}
 					break;
 				}
 				case PROVIDER: {
-					metadataPolicy.put(OidcRoleEnum.PROVIDER.getDescription(), "");
+					metadataPolicy.put(RoleEnum.PROVIDER.getDescription(), "");
 					break;
 				}
 				default: {
@@ -138,7 +138,7 @@ public class OnboardEntityService {
 			ec.setJwks(jwks);
 			JSONObject metadataPolicy = null;
 			
-			switch(OidcRoleEnum.of(type)) {
+			switch(RoleEnum.of(type)) {
 				case CREDENTIAL_ISSUER: {
 					metadataPolicy = resolveMetadataForCredentialIssuer(oe);
 					break;

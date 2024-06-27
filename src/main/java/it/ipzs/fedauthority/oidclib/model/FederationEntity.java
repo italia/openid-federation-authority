@@ -23,7 +23,7 @@ public class FederationEntity extends BaseModel {
 	 * how many minutes from now() an issued statement must expire
 	 */
 	private int defaultExpireMinutes;
-	private String defaultSignatureAlg = GlobalOptions.DEFAULT_SIGNING_ALG;
+	private String defaultSignatureAlg = GlobalOptions.getDefaultJWSAlgorithm();
 	private String authorityHints;
 	private String jwks;
 	private String trustMarks;

@@ -22,7 +22,7 @@ import com.nimbusds.jose.jwk.JWK;
 
 import it.ipzs.fedauthority.oidclib.callback.RelyingPartyLogoutCallback;
 import it.ipzs.fedauthority.oidclib.exception.OIDCException;
-import it.ipzs.fedauthority.oidclib.handler.OidcHandler;
+import it.ipzs.fedauthority.oidclib.handler.OidHandler;
 import it.ipzs.fedauthority.oidclib.model.CredentialDefinition;
 import it.ipzs.fedauthority.oidclib.model.CredentialEHICSubject;
 import it.ipzs.fedauthority.oidclib.model.CredentialField;
@@ -39,9 +39,9 @@ import it.ipzs.fedauthority.oidclib.util.Validator;
 import jakarta.annotation.PostConstruct;
 
 @Component
-public class OidcWrapper {
+public class OidWrapper {
 
-	private static Logger logger = LoggerFactory.getLogger(OidcWrapper.class);
+	private static Logger logger = LoggerFactory.getLogger(OidWrapper.class);
 
 	@Autowired
 	private FedConfig fedConfig;
@@ -49,7 +49,7 @@ public class OidcWrapper {
 	@Autowired
 	private H2PersistenceImpl persistenceImpl;
 
-	private OidcHandler oidcHandler;
+	private OidHandler oidcHandler;
 
 	public String getAuthorizeURL(
 			String spidProvider, String trustAnchor, String redirectUri, String scope,
@@ -258,7 +258,7 @@ public class OidcWrapper {
 		fedEntOptions.setFederation_list_endpoint(fedConfig.getFederationEntity().getFederation_list_endpoint());
 		fedEntOptions.setFederation_trust_mark_status_endpoint(fedConfig.getFederationEntity().getFederation_trust_mark_status_endpoint());
 
-		oidcHandler = new OidcHandler(options, persistenceImpl, credentialOptions, fedEntOptions);
+		oidcHandler = new OidHandler(options, persistenceImpl, credentialOptions, fedEntOptions);
 //		try {
 //			generateRelyingPartyTrustChain();
 //		} catch (Exception e) {

@@ -11,9 +11,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import it.ipzs.fedauthority.oidclib.OIDCConstants;
+import it.ipzs.fedauthority.oidclib.OidConstants;
 import it.ipzs.fedauthority.oidclib.FedConfig;
-import it.ipzs.fedauthority.oidclib.OidcWrapper;
+import it.ipzs.fedauthority.oidclib.OidWrapper;
 import it.ipzs.fedauthority.oidclib.schemas.WellKnownData;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -29,9 +29,9 @@ public class WellKnownController {
 	private FedConfig fedConfig;
 
 	@Autowired
-	private OidcWrapper oidcWrapper;
+	private OidWrapper oidcWrapper;
 
-	@GetMapping(OIDCConstants.OIDC_FEDERATION_WELLKNOWN_URL)
+	@GetMapping(OidConstants.OIDC_FEDERATION_WELLKNOWN_URL)
 	public ResponseEntity<String> wellKnownFederation(@RequestParam(required = false) String format,
 			HttpServletRequest request, HttpServletResponse response) throws Exception {
 

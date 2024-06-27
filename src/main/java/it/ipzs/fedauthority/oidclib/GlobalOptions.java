@@ -1,71 +1,43 @@
 package it.ipzs.fedauthority.oidclib;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 import it.ipzs.fedauthority.oidclib.exception.ConfigException;
 import it.ipzs.fedauthority.oidclib.exception.OIDCException;
 import it.ipzs.fedauthority.oidclib.util.ArrayUtil;
 import it.ipzs.fedauthority.oidclib.util.Validator;
+import it.ipzs.fedauthority.util.StringUtil;
+import lombok.extern.slf4j.Slf4j;
 
 
+@Slf4j
 public class GlobalOptions<T extends GlobalOptions<T>> {
 
-	public static final int DEFAULT_EXPIRING_MINUTES = 30;
+	private Set<String> allowedSigningAlgs = new HashSet<>();
 
-	public static final String DEFAULT_SIGNING_ALG = "RS256";
-
-	public static final String[] SUPPORTED_ENCRYPTION_ENCODINGS = new String[] {
-		"A128CBC-HS256", "A192CBC-HS384", "A256CBC-HS512", "A128GCM", "A192GCM",
-		"A256GCM"};
-
-	public static final String[] SUPPORTED_ENCRYPTION_ALGS = new String[] {
-		"RSA-OAEP", "RSA-OAEP-256", "ECDH-ES", "ECDH-ES+A128KW", "ECDH-ES+A192KW",
-		"ECDH-ES+A256KW"};
-
-	public static final String[] SUPPORTED_SIGNING_ALGS = new String[] {
-		"RS256", "RS384", "RS512", "ES256", "ES384", "ES512"};
-
-	private String jweDefaultAlgorithm = "RSA-OAEP";
-	private String jweDefaultEncryption = "A256CBC-HS512";
-	private String jwsDefaultAlgorithm = "RS256";
-	private Set<String> allowedSigningAlgs = ArrayUtil.asSet(
-		"RS256", "RS384", "RS512", "ES256", "ES384", "ES512");
-	private Set<String> allowedEncryptionAlgs = ArrayUtil.asSet(
-		"RSA-OAEP", "RSA-OAEP-256", "ECDH-ES", "ECDH-ES+A128KW", "ECDH-ES+A192KW",
-		"ECDH-ES+A256KW");
-
-	public int getDefaultExpiringMinutes() {
-		return DEFAULT_EXPIRING_MINUTES;
+	public static int getDefaultExpiringMinutes() {
+		String defaultExpiringMinutes = System.getenv("DEFAULT_EXPIRING_MINUTES");
+		if(defaultExpiringMinutes!=null)
+			return Integer.parseInt(defaultExpiringMinutes);
+		else {
+			log.error("cannot find DEFAULT_EXPIRING_MINUTES env variable");
+			throw new RuntimeException("DEFAULT_EXPIRING_MINUTES env is not defined");
+		}
 	}
 
-	public String getDefaultJWEAlgorithm() {
-		return jweDefaultAlgorithm;
-	}
-
-	public String getDefaultJWEEncryption() {
-		return jweDefaultEncryption;
-	}
-
-	public String getDefaultJWSAlgorithm() {
-		return jwsDefaultAlgorithm;
-	}
-
-	public Set<String> getAllowedEncryptionAlgs() {
-		return Collections.unmodifiableSet(allowedEncryptionAlgs);
+	public static String getDefaultJWSAlgorithm() {
+		String defaultSigningAlg = System.getenv("DEFAULT_SIGNING_ALG");
+		if(StringUtil.isBlank(defaultSigningAlg)){
+			log.error("DEFAULT_SIGNING_ALG env is not defined");
+			throw new RuntimeException("DEFAULT_SIGNING_ALG env is not defined");
+		}
+		return defaultSigningAlg;
 	}
 
 	public Set<String> getAllowedSigningAlgs() {
 		return Collections.unmodifiableSet(allowedSigningAlgs);
-	}
-
-	@SuppressWarnings("unchecked")
-	public T setAllowedEncryptionAlgs(String... values) {
-		if (values.length > 0) {
-			allowedEncryptionAlgs = ArrayUtil.asSet(values);
-		}
-
-		return (T)this;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -77,43 +49,11 @@ public class GlobalOptions<T extends GlobalOptions<T>> {
 		return (T)this;
 	}
 
-	@SuppressWarnings("unchecked")
-	public T setDefaultJWEAlgorithm(String algorithm) {
-		if (!Validator.isNullOrEmpty(algorithm)) {
-			jweDefaultAlgorithm = algorithm;
-		}
-
-		return (T)this;
-	}
-
-	@SuppressWarnings("unchecked")
-	public T setDefaultJWEEncryption(String encMethod) {
-		if (!Validator.isNullOrEmpty(encMethod)) {
-			jweDefaultEncryption = encMethod;
-		}
-
-		return (T)this;
-	}
-
-	@SuppressWarnings("unchecked")
-	public T setDefaultJWSAlgorithm(String algorithm) {
-		if (!Validator.isNullOrEmpty(algorithm)) {
-			jwsDefaultAlgorithm = algorithm;
-		}
-
-		return (T)this;
-	}
-
 	protected void validate() throws OIDCException {
 
-		if (!allowedEncryptionAlgs.contains(jweDefaultAlgorithm)) {
-			throw new ConfigException(
-				"Not allowed jweDefaultAlgorithm %s", jweDefaultAlgorithm);
-		}
-
-		if (!allowedSigningAlgs.contains(jwsDefaultAlgorithm)) {
-			throw new ConfigException(
-				"Not allowed jwsDefaultAlgorithm %s", jwsDefaultAlgorithm);
+		if (!allowedSigningAlgs.contains(getDefaultJWSAlgorithm())) {
+			log.error(
+				"Not allowed jwsDefaultAlgorithm {}", getDefaultJWSAlgorithm());
 		}
 
 	}

@@ -19,7 +19,7 @@ public class OnboardEntity {
   private String url;
   private String urlCIEButton;
   private String email;
-  private OidcRoleEnum role;
+  private RoleEnum role;
   private Map<String, Object> jwk;
   private String trustMark;
   @JsonIgnore
