@@ -1,0 +1,75 @@
+spring:
+  application:
+    name: it-federation
+  data:
+    mongodb:
+      uri: mongodb+srv://localhost:27017/?retryWrites=true&w=majority
+      database: it-federation
+keys:
+  directory-path: ${user.home}/key
+  path: ${keys.directory-path}/trustanchor-pp-key-jwk.json
+  public-jwk-set-path: ${keys.directory-path}/trustanchor-pp-public-jwk.json
+  revoked-jwk-set-path: ${keys.directory-path}/revoked-jwk.json
+fed-config:
+   hosts:
+      trust-anchor: 127.0.0.1
+      cie-provider: 127.0.0.1
+      relying-party: 127.0.0.1
+      federation-entity: 127.0.0.1
+
+      
+   # required for onboarding checks and also for all the leafs
+   default-trust-anchor: "https://demo.federation.eudi.wallet.developers.italia.it/"
+
+   # List of trust anchors
+   trust-anchors:
+   - ${fed-config.default-trust-anchor}
+
+   # Map of known OPs and related Trust Anchor.
+   spid-providers:
+     - subject: "http://${fed-config.hosts.trust-anchor}:8000/oidc/op/"
+       trust-anchor: ${fed-config.default-trust-anchor}
+   cie-providers:
+     - subject: "http://${fed-config.hosts.cie-provider}:8002/oidc/op/"
+       trust-anchor: ${fed-config.default-trust-anchor}
+
+   federation-entity:
+     homepage-uri: "https://${fed-config.hosts.federation-entity}"
+     organization-name: "Istituto Poligrafico e Zecca di Stato"
+     policy-uri: "https://${fed-config.hosts.federation-entity}"
+     tos-uri: "https://${fed-config.hosts.federation-entity}"
+     logo-uri:  "https://${fed-config.hosts.federation-entity}/public/logo.svg"
+     federation_list_endpoint: "https://${fed-config.hosts.federation-entity}/list"
+     federation_fetch_endpoint: "https://${fed-config.hosts.federation-entity}/fetch"
+     federation_trust_mark_status_endpoint: "https://${fed-config.hosts.federation-entity}/status"
+     federation_resolve_endpoint: "https://${fed-config.hosts.federation-entity}/resolve"
+     federation_historical_jwks_endpoint: "https://${fed-config.hosts.federation-entity}/historical-jwks"
+
+     
+   relying-party:
+      application-name: "SpringBoot RP Sample"
+      application-type: "web"
+      contacts:
+      - "dev@example.com"
+      #response-types  only "code" allowed
+      scope:
+      - openid
+      - offline_access
+      token-endpoint-auth-method: 
+      - private_key_jwt
+      client-id: "http://${fed-config.hosts.relying-party}:8080"
+      redirect-uris:
+      - "http://${fed-config.hosts.relying-party}:8080/callback"
+      jwk-file-path: ${keys.directory-path}/it-trustanchor-jwk.json
+      trust-marks-file-path: ${keys.directory-path}/it-trustanchor-trust-marks.json
+
+   openid-credential-issuer:
+      credential-issuer: 127.0.0.1:8080
+      dpop-signing-alg-values-supported:
+      - RS256
+      authorization-endpoint: "http://${fed-config.openid-credential-issuer.credential-issuer}/authorize"
+      token-endpoint: "http://${fed-config.openid-credential-issuer.credential-issuer}/token"
+      pushed-authorization-request-endpoint: "http://${fed-config.openid-credential-issuer.credential-issuer}/as/par"
+      credential-endpoint: "http://${fed-config.openid-credential-issuer.credential-issuer}/credential"
+      jwk-file-path: ${user.home}/key/eudi-pp-key-jwk.json
+      sub: "http://${fed-config.hosts.relying-party}:8080/ci"
